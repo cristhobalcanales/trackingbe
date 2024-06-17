@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/ubicacion.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/ubicacion",
+      "dest": "/api/ubicacion.js"
+    }
+  ]
+}

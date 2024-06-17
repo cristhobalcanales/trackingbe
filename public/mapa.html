@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mapa de Ubicación</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+      #map {
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const map = L.map("map").setView([0, 0], 13);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: "© OpenStreetMap",
+        }).addTo(map);
+
+        const destinationCoordinates = [-33.45441917568674, -70.68824336297328];
+        const destinationMarker = L.marker(destinationCoordinates)
+          .addTo(map)
+          .bindPopup("Destino")
+          .openPopup();
+
+        let userMarker = L.marker([0, 0], { draggable: false }).addTo(map);
+        let routeLine = L.polyline([], { color: "blue" }).addTo(map);
+
+        function getRoute(userLocation, destinationLocation) {
+          const url = `https://router.project-osrm.org/route/v1/driving/${userLocation.lng},${userLocation.lat};${destinationLocation.lng},${destinationLocation.lat}?overview=full&geometries=geojson`;
+          fetch(url)
+            .then((response) => response.json())
+            .then((data) => {
+              const route = data.routes[0].geometry.coordinates;
+              const latLngRoute = route.map((coord) => [coord[1], coord[0]]);
+              routeLine.setLatLngs(latLngRoute);
+            })
+            .catch((error) =>
+              console.error("Error al obtener la ruta:", error)
+            );
+        }
+
+        function actualizarUbicacion() {
+          fetch("/api/ubicacion")
+            .then((response) => response.json())
+            .then((data) => {
+              const userLocation = L.latLng(data.latitud, data.longitud);
+              userMarker.setLatLng(userLocation);
+              getRoute(userLocation, L.latLng(destinationCoordinates));
+            })
+            .catch((error) =>
+              console.error("Error al obtener la ubicación:", error)
+            );
+        }
+
+        setInterval(actualizarUbicacion, 1000);
+      });
+    </script>
+  </body>
+</html>
